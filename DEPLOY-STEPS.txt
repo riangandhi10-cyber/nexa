@@ -1,0 +1,30 @@
+Deploy Nexa to Render
+=====================
+
+Repo (public): https://github.com/riangandhi10-cyber/nexa
+Live URL:        https://nexa.onrender.com
+
+FASTEST — run this in Terminal:
+  cd ai-chatbot
+  ./deploy-for-me.sh
+
+It will log you into Render (browser), then open the Blueprint page.
+
+If "nexa" does NOT appear in the repo list:
+  1. On Render, click "Configure account" next to GitHub
+  2. Grant access to the "nexa" repository
+  3. Refresh and select nexa → Apply
+
+MANUAL — New Web Service (if Blueprint fails):
+  1. https://dashboard.render.com → New + → Web Service
+  2. Connect repo: riangandhi10-cyber/nexa
+  3. Name: nexa
+  4. Runtime: Python 3
+  5. Build Command:  pip install -r requirements.txt
+  6. Start Command:  python server.py
+  7. Health Check Path: /api/health
+  8. Environment → add OPENAI_API_KEY (from your .env file)
+  9. Create Web Service
+
+After deploy:
+  ./deploy-now.sh

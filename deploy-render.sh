@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# One-click Render setup for Nexa
+# Deploy Nexa to Render — permanent URL: https://nexa.onrender.com
 set -euo pipefail
+export PATH="/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:$PATH"
 DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DIR"
 
@@ -12,13 +13,18 @@ echo "════════════════════════�
 echo "  Deploy Nexa to Render"
 echo "══════════════════════════════════════════════════════════════"
 echo ""
-echo "  Repo:  $REPO"
+echo "  Repo:  $REPO  (public)"
 echo "  Live:  $URL"
 echo ""
-echo "  1. Render opens → connect repo 'nexa'"
-echo "  2. Click Apply (render.yaml is already in the repo)"
-echo "  3. Add OPENAI_API_KEY in Environment (paste from your .env)"
-echo "  4. Wait ~2 min for deploy"
+echo "  Easiest: ./deploy-for-me.sh  (logs into Render + opens Blueprint)"
+echo ""
+echo "  Manual steps:"
+echo "  1. Render → New + → Blueprint (or Web Service)"
+echo "  2. Connect repo: nexa"
+echo "  3. If nexa is missing → Configure GitHub → grant access to nexa"
+echo "  4. Apply → add OPENAI_API_KEY → Deploy"
+echo ""
+echo "  See DEPLOY-STEPS.txt for full manual Web Service setup."
 echo ""
 
 open "https://dashboard.render.com/select-repo?type=blueprint" 2>/dev/null || true
