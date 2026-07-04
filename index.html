@@ -667,6 +667,27 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   padding: 8px 12px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.output-actions {
+  display: flex;
+  gap: 6px;
+}
+.output-actions button {
+  padding: 3px 8px;
+  font-size: 11px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface2);
+  color: var(--text);
+  cursor: pointer;
+}
+.output-actions button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 #code-output {
   flex: 1;
@@ -692,6 +713,63 @@ body {
   display: none;
 }
 #html-preview.show { display: block; }
+
+#fullscreen-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: #0a0a0c;
+  flex-direction: column;
+}
+#fullscreen-overlay.open { display: flex; }
+.fullscreen-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.fullscreen-bar span { font-size: 14px; font-weight: 500; }
+.fullscreen-bar-actions { display: flex; gap: 8px; }
+.fullscreen-bar button {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+}
+.fullscreen-bar button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+#fullscreen-frame {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: #fff;
+  display: none;
+}
+#fullscreen-frame.show { display: block; }
+#fullscreen-text {
+  flex: 1;
+  margin: 0;
+  padding: 20px;
+  overflow: auto;
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.5;
+  color: #c9d1d9;
+  white-space: pre-wrap;
+  display: none;
+}
+#fullscreen-text.show { display: block; }
+
 .code-to-playground {
   position: absolute;
   top: 6px;
@@ -801,14 +879,34 @@ body {
   <textarea id="code-editor" spellcheck="false" placeholder="// Write code here and click Run"></textarea>
   <div class="code-toolbar">
     <button id="code-run-btn">▶ Run</button>
-    <button id="code-clear-btn">Clear output</button>
+    <button id="code-fullscreen-btn" title="Fullscreen preview">⛶ Fullscreen</button>
+    <button id="code-download-btn" title="Download as file">↓ Download</button>
+    <button id="code-clear-btn">Clear</button>
   </div>
   <div class="code-output-wrap">
-    <div class="code-output-label" id="code-output-label">Output</div>
+    <div class="code-output-label">
+      <span id="code-output-label">Output</span>
+      <div class="output-actions">
+        <button type="button" id="output-fullscreen-btn">⛶</button>
+        <button type="button" id="output-download-btn">↓</button>
+      </div>
+    </div>
     <div id="code-output"></div>
     <iframe id="html-preview" sandbox="allow-scripts allow-same-origin allow-modals" title="HTML preview"></iframe>
   </div>
 </aside>
+</div>
+
+<div id="fullscreen-overlay">
+  <div class="fullscreen-bar">
+    <span id="fullscreen-title">Preview</span>
+    <div class="fullscreen-bar-actions">
+      <button type="button" id="fullscreen-download-btn" class="primary">↓ Download file</button>
+      <button type="button" id="fullscreen-close-btn">✕ Close</button>
+    </div>
+  </div>
+  <iframe id="fullscreen-frame" sandbox="allow-scripts allow-same-origin allow-modals" title="Fullscreen preview"></iframe>
+  <pre id="fullscreen-text"></pre>
 </div>
 
 <div id="modal-overlay">
@@ -1102,17 +1200,81 @@ function setPlaygroundLang(lang) {
   });
   const output = document.getElementById('code-output');
   const preview = document.getElementById('html-preview');
-  const label = document.getElementById('code-output-label');
+  const labelSpan = document.getElementById('code-output-label');
   if (lang === 'html') {
-    label.textContent = 'Preview';
+    labelSpan.textContent = 'Preview';
     output.style.display = 'none';
     preview.classList.add('show');
   } else {
-    label.textContent = 'Output';
+    labelSpan.textContent = 'Output';
     output.style.display = 'block';
     preview.classList.remove('show');
   }
   saveState();
+}
+
+function fileExtForLang(lang) {
+  if (lang === 'python') return 'py';
+  if (lang === 'html') return 'html';
+  return 'js';
+}
+
+function downloadText(content, filename) {
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function downloadPlaygroundFile() {
+  const editor = document.getElementById('code-editor');
+  const code = editor.value;
+  const ext = fileExtForLang(playgroundLang);
+  const name = playgroundLang === 'html' ? 'index.html' : `nexa-code.${ext}`;
+  downloadText(code, name);
+}
+
+function downloadOutputFile() {
+  if (playgroundLang === 'html') {
+    downloadPlaygroundFile();
+    return;
+  }
+  const out = document.getElementById('code-output').textContent;
+  if (!out) return;
+  downloadText(out, 'nexa-output.txt');
+}
+
+function openFullscreen(auto) {
+  const overlay = document.getElementById('fullscreen-overlay');
+  const frame = document.getElementById('fullscreen-frame');
+  const text = document.getElementById('fullscreen-text');
+  const title = document.getElementById('fullscreen-title');
+  const editor = document.getElementById('code-editor');
+
+  if (playgroundLang === 'html') {
+    const html = editor.value;
+    frame.srcdoc = html;
+    frame.classList.add('show');
+    text.classList.remove('show');
+    title.textContent = 'HTML Preview — fullscreen';
+  } else {
+    const out = document.getElementById('code-output').textContent;
+    frame.classList.remove('show');
+    frame.srcdoc = '';
+    text.textContent = out || editor.value;
+    text.classList.add('show');
+    title.textContent = playgroundLang === 'python' ? 'Python output' : 'JavaScript output';
+  }
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeFullscreen() {
+  document.getElementById('fullscreen-overlay').classList.remove('open');
+  document.getElementById('fullscreen-frame').srcdoc = '';
+  document.body.style.overflow = '';
 }
 
 function setCodeOutput(text, isError) {
@@ -1203,7 +1365,8 @@ async function runPython(code) {
 function runHtml(code) {
   const preview = document.getElementById('html-preview');
   preview.srcdoc = code;
-  return { ok: true, text: 'Rendered in preview panel →' };
+  openFullscreen();
+  return { ok: true, text: '' };
 }
 
 async function runPlaygroundCode() {
@@ -1246,9 +1409,19 @@ function initPlayground() {
   };
   document.getElementById('code-panel-close').onclick = () => setPlaygroundOpen(false);
   document.getElementById('code-run-btn').onclick = runPlaygroundCode;
+  document.getElementById('code-fullscreen-btn').onclick = () => openFullscreen();
+  document.getElementById('code-download-btn').onclick = downloadPlaygroundFile;
+  document.getElementById('output-fullscreen-btn').onclick = () => openFullscreen();
+  document.getElementById('output-download-btn').onclick = downloadOutputFile;
+  document.getElementById('fullscreen-close-btn').onclick = closeFullscreen;
+  document.getElementById('fullscreen-download-btn').onclick = downloadPlaygroundFile;
+  document.getElementById('fullscreen-overlay').onclick = e => {
+    if (e.target.id === 'fullscreen-overlay') closeFullscreen();
+  };
   document.getElementById('code-clear-btn').onclick = () => {
     setCodeOutput('');
     document.getElementById('html-preview').srcdoc = '';
+    closeFullscreen();
   };
 
   document.querySelectorAll('.lang-tab').forEach(tab => {
@@ -1290,6 +1463,10 @@ function initPlayground() {
       e.preventDefault();
       runPlaygroundCode();
     }
+    if (e.key === 'Escape') closeFullscreen();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeFullscreen();
   });
 }
 
