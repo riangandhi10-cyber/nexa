@@ -1,5 +1,5 @@
 # Nexa on Render — service name "nexa" → https://nexa.onrender.com
-# Dashboard: New → Blueprint → connect repo, root directory: ai-chatbot
+# Repo: https://github.com/riangandhi10-cyber/nexa (app is repo root)
 services:
   - type: web
     name: nexa

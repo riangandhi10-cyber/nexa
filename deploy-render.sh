@@ -1,46 +1,27 @@
 #!/usr/bin/env bash
-# Deploy Nexa to Render — permanent URL: https://nexa.onrender.com
+# One-click Render setup for Nexa
 set -euo pipefail
-export PATH="/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:$PATH"
 DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DIR"
 
+REPO="https://github.com/riangandhi10-cyber/nexa"
+URL="https://nexa.onrender.com"
+
 echo ""
 echo "══════════════════════════════════════════════════════════════"
-echo "  Deploy Nexa to Render (free permanent URL)"
+echo "  Deploy Nexa to Render"
 echo "══════════════════════════════════════════════════════════════"
 echo ""
-echo "Your app URL will be:"
-echo "  https://nexa.onrender.com"
+echo "  Repo:  $REPO"
+echo "  Live:  $URL"
 echo ""
-echo "Steps:"
-echo "  1) Push this folder to GitHub (repo can be 'files' with root ai-chatbot)"
-echo "  2) Open https://dashboard.render.com → New + → Blueprint"
-echo "  3) Connect your repo"
-echo "  4) Set root directory to: ai-chatbot"
-echo "  5) Add environment variable OPENAI_API_KEY (Dashboard → Environment)"
-echo "  6) Deploy — wait ~2 min for first build"
-echo ""
-echo "Optional (Google search + images):"
-echo "  GOOGLE_API_KEY and GOOGLE_CSE_ID in Render env vars"
+echo "  1. Render opens → connect repo 'nexa'"
+echo "  2. Click Apply (render.yaml is already in the repo)"
+echo "  3. Add OPENAI_API_KEY in Environment (paste from your .env)"
+echo "  4. Wait ~2 min for deploy"
 echo ""
 
-if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
-  echo "GitHub CLI is logged in."
-  REMOTE="$(git -C "$DIR/.." remote get-url origin 2>/dev/null || true)"
-  [[ -n "$REMOTE" ]] && echo "  Parent repo remote: ${REMOTE}"
-  echo ""
-  echo "Push latest code:"
-  echo "  cd $(dirname "$DIR") && git add ai-chatbot && git commit -m 'Deploy Nexa' && git push"
-  echo ""
-fi
+open "https://dashboard.render.com/select-repo?type=blueprint" 2>/dev/null || true
 
-echo "Open Render dashboard now? (y/n)"
-read -r OPEN
-if [[ "$(echo "$OPEN" | tr '[:upper:]' '[:lower:]')" == "y" ]]; then
-  open "https://dashboard.render.com/select-repo?type=blueprint" 2>/dev/null || true
-fi
-
+echo "After deploy, run: ./deploy-now.sh"
 echo ""
-echo "After deploy, check:"
-echo "  curl https://nexa.onrender.com/api/health"
