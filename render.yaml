@@ -1,0 +1,23 @@
+# Nexa on Render — service name "nexa" → https://nexa.onrender.com
+# Dashboard: New → Blueprint → connect repo, root directory: ai-chatbot
+services:
+  - type: web
+    name: nexa
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-5.5
+      - key: OPENAI_MAX_TOKENS
+        value: "2500"
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: GOOGLE_CSE_ID
+        sync: false
